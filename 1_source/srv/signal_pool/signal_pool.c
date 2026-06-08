@@ -309,50 +309,6 @@ sp_result_t map_raw_float_rw(const sig_nr_pools_t sig_pool, const sig_config_t r
 }
 
 /**
- * @brief This function assigns the value address of sig_nr to map_target.
- *        Before returning the address sanity checks are done.
- *
- *        The sig_nr needs to be contained in the signal_pool_t range it needs
- *        to be initialized as float, and the map_target needs to point to a pointer.
- *
- * @param[in]  sig_pool The related signal pool
- * @param[in]  range    The signal range where the signal is contained
- * @param[in]  sig_nr   The signal nr which should be mapped
- * @param[out]  map_target  Ptr-float32_t  The address is written if map_target unequal NULL
- *                          and return value fct call check_accessor_par(.) is ERR_SP_SUCCESS
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS,
- *                        error: ERR_SP_GENERIC_ERROR or error from called check_accessor_par()
- */
-sp_result_t map_raw_float_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
-        const uint32_t sig_nr, float32_t **const map_target)
-{
-    sp_result_t ret_val = ERR_SP_SUCCESS;  // Local return value init with ERR_SP_SUCCESS
-
-    if (NULL != map_target)
-    {
-        ret_val = check_accessor_par(sig_pool, range, sig_nr);
-
-        if (ret_val == ERR_SP_SUCCESS)
-        {
-            if (ffp32 == pool_memory[sig_pool].values[sig_nr].signal_type)
-            {
-                *map_target = &pool_memory[sig_pool].values[sig_nr].z.val_float;
-            }
-            else
-            {
-                ret_val = ERR_SP_INVALID_DTYPE;
-            }
-        }
-    }
-    else
-    {
-        ret_val = ERR_SP_GENERIC_ERROR;
-    }
-
-    return ret_val;
-}
-
-/**
  * @brief  Set the signal float type
  *
  * @param[in]  sig_pool The related signal pool
@@ -462,51 +418,6 @@ sp_result_t map_raw_uint32_rw(const sig_nr_pools_t sig_pool, const sig_config_t 
 
     return ret_val;
 }
-
-/**
- * @brief This function assigns the value address of sig_nr to map_target.
- *        Before returning the address sanity checks are done.
- *
- *        The sig_nr needs to be contained in the signal_pool_t range it needs
- *        to be initialized as float, and the map_target needs to point to a pointer.
- *
- * @param[in]  sig_pool The related signal pool
- * @param[in]  range    The signal range where the signal is contained
- * @param[in]  sig_nr   The signal nr which should be mapped
- * @param[out] map_target  Ptr-u32  The address is written if ret_val is ERR_SP_SUCCESS
- *                         and signal_type is uint32
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                        error: ERR_SP_GENERIC_ERROR or error from called check_accessor_par()
- */
-sp_result_t map_raw_uint32_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
-        const uint32_t sig_nr, uint32_t **const map_target)
-{
-    sp_result_t ret_val = ERR_SP_SUCCESS;  // Local return variable init with ERR_SP_SUCCESS
-
-    if (NULL != map_target)
-    {
-        ret_val = check_accessor_par(sig_pool, range, sig_nr);
-
-        if (ERR_SP_SUCCESS == ret_val)
-        {
-            if (uint32 == pool_memory[sig_pool].values[sig_nr].signal_type)
-            {
-                *map_target = &pool_memory[sig_pool].values[sig_nr].z.val_uint32;
-            }
-            else
-            {
-                ret_val = ERR_SP_INVALID_DTYPE;
-            }
-        }
-    }
-    else
-    {
-        ret_val = ERR_SP_GENERIC_ERROR;
-    }
-
-    return ret_val;
-}
-
 
 /**
  * @brief  Set the signal uint32
