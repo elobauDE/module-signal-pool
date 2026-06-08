@@ -69,6 +69,7 @@ static bool init_pool_memory(const sig_nr_pools_t sig_pool)
 
     if (sig_pool >= sig_nr_max)
     {
+        /* Invalid signal pool index */
         init_ok = false;
     }
     else
@@ -80,9 +81,15 @@ static bool init_pool_memory(const sig_nr_pools_t sig_pool)
         }
 
         // Determine the config information which holds the ranges of the signals
-        for (uint32_t i = 0; i < (uint32_t)sp_complete_pool; i++)
+        // sp_complete_pool is the last element of the enum sig_config_t: describes the full pool
+        for (uint32_t i = 0; i < ((uint32_t)sp_complete_pool + 1u); i++)
         {
             configs[i].start = offset;
+            /* set start to 0 for the complete pool */
+            if (i == sp_complete_pool)
+            {
+                configs[i].start = 0;
+            }
             configs[i].size = sp_cfg_get_range_size((sig_config_t)i); /* parasoft-suppress MISRAC2012-RULE_10_5-a "Cast is ok, is checked in loop" */
 
             if (configs[i].size > (SIZE_MAX - offset))
