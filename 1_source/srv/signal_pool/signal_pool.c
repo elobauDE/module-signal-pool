@@ -119,7 +119,7 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
     const signal_pool_t *p_cfg;
     static bool memory_is_initialized[sig_nr_max] = {false};
 
-    if ((signal_range > sp_complete_pool) && (sig_pool >= sig_nr_max))
+    if ((signal_range > sp_complete_pool) || (sig_pool >= sig_nr_max))
     {
         p_cfg = NULL;
     }
@@ -165,7 +165,10 @@ static sp_result_t check_accessor_par(const sig_nr_pools_t sig_pool,
     const size_t end_range = sp_cfg_get_range_end(range);
 
     // Parameter check
-    if ((sig_nr > end_range) || (sig_nr < start_range))
+    if ((sig_nr > end_range)
+        || (sig_nr < start_range)
+        || (sig_nr >= SP_NR_OF_MEM_CELLS)
+        || (sig_pool >= sig_nr_max))
     {
         ret_val = ERR_SP_SIG_OUT_OF_RANGE;
     }
