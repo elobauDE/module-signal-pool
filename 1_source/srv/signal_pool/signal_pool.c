@@ -277,7 +277,7 @@ sp_result_t get_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[out]  map_target  Ptr-float32_t  The address is written if map_target unequal NULL
  *                          and return value fct call check_accessor_par(.) is ERR_SP_SUCCESS
  * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS,
- *                        error: ERR_SP_GENERIC_ERROR or error from called check_accessor_par()
+ *                        error: ERR_SP_GENERIC_ERROR, ERR_SP_INVALID_DTYPE or error from called check_accessor_par()
  */
 sp_result_t map_raw_float_rw(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, float32_t **map_target)
