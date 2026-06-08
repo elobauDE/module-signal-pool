@@ -485,8 +485,7 @@ sp_result_t map_raw_uint32_ro(const sig_nr_pools_t sig_pool, const sig_config_t 
  * @param[in]  range     The signal range which contains sig_nr
  * @param[in]  sig_nr    signal number which needs to be configured correctly.
  * @param[in]  value  u32  value to write.
- * @return  sp_result_t  if success: ERR_SP_SUCCESS
- *                       -- error:ERR_SP_INVALID_DTYPE
+ * @return  sp_result_t  if success: ERR_SP_SUCCESS otherwise: error type.
  */
 sp_result_t set_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, const uint32_t value)
