@@ -60,7 +60,7 @@ static signal_pool_t  configs[(uint32_t)sp_complete_pool + 1u];
  * @brief Initialize the memory pool
  *
  * @param[in]  sig_pool  Related signal pool index
- * @return  bool  Returns unconditional true
+ * @return  bool  Returns true if initialization was successful, otherwise false
  */
 static bool init_pool_memory(const sig_nr_pools_t sig_pool)
 {
@@ -133,7 +133,7 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
             {
                 memory_is_initialized[sig_pool] = true;
             }
-            else /* memory initalization failed */
+            else /* memory initialization failed */
             {
                 /* set pointer to NULL to produce error */
                 p_cfg = NULL;

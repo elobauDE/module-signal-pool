@@ -17,7 +17,7 @@ Quellen:
 ## Repository-Struktur
 
 - `0_config/`
-	- Platz fuer projektspezifische Konfiguration (z. B. Signal-Range-Definitionen)
+	- Platz fuer projektspezifische Konfiguration
 - `1_source/srv/signal_pool/`
 	- Modulimplementierung (`signal_pool.c`, `signal_pool.h`)
 
@@ -66,10 +66,10 @@ Diese Dateien werden typischerweise im Hauptprojekt bereitgestellt.
 	- `set_signal_type(...)`
 - Float-Zugriff:
 	- `get_signal_float(...)`, `set_signal_float(...)`
-	- `map_raw_float_ro(...)`, `map_raw_float_rw(...)`
+    - `map_raw_float_rw(...)`
 - Uint32-Zugriff:
-	- `get_signal_uint32(...)`, `set_signal_uint32(...)`
-	- `map_raw_uint32_ro(...)`, `map_raw_uint32_rw(...)`
+	- `get_signal_uint32(...)`, `set_signal_uint32(...)`,
+    - `map_raw_uint32_rw(...)`
 
 ## Hinweise
 
