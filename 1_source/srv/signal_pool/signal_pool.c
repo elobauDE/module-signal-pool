@@ -64,23 +64,39 @@ static signal_pool_t  configs[(uint32_t)sp_complete_pool + 1u];
  */
 static bool init_pool_memory(const sig_nr_pools_t sig_pool)
 {
-    for (uint32_t i = 0uL; i < SP_NR_OF_MEM_CELLS; i++)
+    bool init_ok = true;
+    size_t offset = 0; // hint: the offset depends on datatype size
+
+    if (sig_pool >= sig_nr_max)
     {
-        pool_memory[sig_pool].values[i].signal_type = invalid;
-        pool_memory[sig_pool].values[i].signal_id = i;  // signal identifier is the index
+        init_ok = false;
+    }
+    else
+    {
+        for (uint32_t i = 0uL; i < SP_NR_OF_MEM_CELLS; i++)
+        {
+            pool_memory[sig_pool].values[i].signal_type = invalid;
+            pool_memory[sig_pool].values[i].signal_id = i;  // signal identifier is the index
+        }
+
+        // Determine the config information which holds the ranges of the signals
+        for (uint32_t i = 0; i < (uint32_t)sp_complete_pool; i++)
+        {
+            configs[i].start = offset;
+            configs[i].size = sp_cfg_get_range_size((sig_config_t)i); /* parasoft-suppress MISRAC2012-RULE_10_5-a "Cast is ok, is checked in loop" */
+
+            if (configs[i].size > (SIZE_MAX - offset))
+            {
+                init_ok = false;
+                break;
+            }
+
+            configs[i].end = offset + configs[i].size;
+            offset += configs[i].size;
+        }
     }
 
-    // Determine the config information which holds the ranges of the signals
-    size_t offset = 0; // hint: the offset depends on datatyp size
-    for (uint32_t i = 0; i < (uint32_t)sp_complete_pool; i++)
-    {
-        configs[i].start = offset;
-        configs[i].size = sp_cfg_get_range_size((sig_config_t)i); /* parasoft-suppress MISRAC2012-RULE_10_5-a "Cast is ok, is checked in loop" */
-        configs[i].end = offset + configs[i].size;
-        offset += configs[i].size;
-    }
-
-    return true;
+    return init_ok;
 }
 
 /*  ---------------  ONE GLOBAL FUNCTION BETWEEN    -----------------------  */
@@ -106,7 +122,15 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
         // Initialize the memory just once
         if (memory_is_initialized[sig_pool] == false)
         {
-            memory_is_initialized[sig_pool] = init_pool_memory(sig_pool);
+            if (init_pool_memory(sig_pool))
+            {
+                memory_is_initialized[sig_pool] = true;
+            }
+            else /* memory initalization failed */
+            {
+                /* set pointer to NULL to produce error */
+                p_cfg = NULL;
+            }
         }
     }
 
