@@ -356,8 +356,7 @@ sp_result_t set_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[in] range    The signal range where the signal is contained
  * @param[in] sig_nr   The signal nr of the wanted signal
  * @param[out]  value  Ptr-u32  Points to memory element
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                      -- error case: ERR_SP_GENERIC_ERROR.
+ * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS otherwise: error value.
  */
 sp_result_t get_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, uint32_t *const value)
@@ -368,7 +367,9 @@ sp_result_t get_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t 
     {
         ret_val = check_accessor_par(sig_pool, range, sig_nr);
 
-        if (ERR_SP_SUCCESS == ret_val)
+        if ((ERR_SP_SUCCESS == ret_val)
+            && (sig_nr < SP_NR_OF_MEM_CELLS)
+            && (sig_pool < sig_nr_max))
         {
             if (uint32 == pool_memory[sig_pool].values[sig_nr].signal_type)
             {
