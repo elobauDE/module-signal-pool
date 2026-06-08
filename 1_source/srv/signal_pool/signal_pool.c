@@ -119,7 +119,7 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
     const signal_pool_t *p_cfg;
     static bool memory_is_initialized[sig_nr_max] = {false};
 
-    if (signal_range > sp_complete_pool)
+    if ((signal_range > sp_complete_pool) && (sig_pool >= sig_nr_max))
     {
         p_cfg = NULL;
     }
