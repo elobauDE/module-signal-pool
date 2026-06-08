@@ -210,7 +210,9 @@ sp_result_t get_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
     {
         ret_val = check_accessor_par(sig_pool, range, sig_nr);
 
-        if (ret_val == ERR_SP_SUCCESS)
+        if ((ERR_SP_SUCCESS == ret_val)
+            && (sig_nr < SP_NR_OF_MEM_CELLS)
+            && (sig_pool < sig_nr_max))
         {
             if (ffp32 == pool_memory[sig_pool].values[sig_nr].signal_type)
             {
