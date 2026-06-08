@@ -68,7 +68,7 @@ Diese Dateien werden typischerweise im Hauptprojekt bereitgestellt.
 	- `get_signal_float(...)`, `set_signal_float(...)`
     - `map_raw_float_rw(...)`
 - Uint32-Zugriff:
-	- `get_signal_uint32(...)`, `set_signal_uint32(...)`,
+	- `get_signal_uint32(...)`, `set_signal_uint32(...)`
     - `map_raw_uint32_rw(...)`
 
 ## Hinweise
