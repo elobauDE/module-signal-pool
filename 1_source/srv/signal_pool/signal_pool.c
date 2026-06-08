@@ -244,9 +244,7 @@ sp_result_t get_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
     {
         ret_val = check_accessor_par(sig_pool, range, sig_nr);
 
-        if ((ERR_SP_SUCCESS == ret_val)
-            && (sig_nr < SP_NR_OF_MEM_CELLS)
-            && (sig_pool < sig_nr_max))
+        if (ERR_SP_SUCCESS == ret_val)
         {
             if (ffp32 == pool_memory[sig_pool].values[sig_nr].signal_type)
             {
@@ -278,8 +276,8 @@ sp_result_t get_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[in]  sig_nr The signal nr which should be mapped
  * @param[out]  map_target  Ptr-float32_t  The address is written if map_target unequal NULL
  *                          and return value fct call check_accessor_par(.) is ERR_SP_SUCCESS
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS, -- error-1: ERR_SP_SIG_OUT_OF_RANGE,
- *                       -- error-2: ERR_SP_SIG_INVALID, -- error-3: ERR_SP_GENERIC_ERROR
+ * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS,
+ *                        error: ERR_SP_GENERIC_ERROR or error from called check_accessor_par()
  */
 sp_result_t map_raw_float_rw(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, float32_t **map_target)
@@ -322,8 +320,8 @@ sp_result_t map_raw_float_rw(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[in]  sig_nr   The signal nr which should be mapped
  * @param[out]  map_target  Ptr-float32_t  The address is written if map_target unequal NULL
  *                          and return value fct call check_accessor_par(.) is ERR_SP_SUCCESS
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS, -- error-1: ERR_SP_SIG_OUT_OF_RANGE,
- *                       -- error-2: ERR_SP_SIG_INVALID, -- error-3: ERR_SP_GENERIC_ERROR
+ * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS,
+ *                        error: ERR_SP_GENERIC_ERROR or error from called check_accessor_par()
  */
 sp_result_t map_raw_float_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, float32_t **const map_target)
@@ -368,9 +366,7 @@ sp_result_t set_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
 {
     sp_result_t ret_val = check_accessor_par(sig_pool, range, sig_nr);
 
-    if ((ERR_SP_SUCCESS == ret_val)
-        && (sig_nr < SP_NR_OF_MEM_CELLS)
-        && (sig_pool < sig_nr_max))
+    if (ERR_SP_SUCCESS == ret_val)
     {
         if (ffp32 == pool_memory[sig_pool].values[sig_nr].signal_type)
         {
@@ -403,9 +399,7 @@ sp_result_t get_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t 
     {
         ret_val = check_accessor_par(sig_pool, range, sig_nr);
 
-        if ((ERR_SP_SUCCESS == ret_val)
-            && (sig_nr < SP_NR_OF_MEM_CELLS)
-            && (sig_pool < sig_nr_max))
+        if (ERR_SP_SUCCESS == ret_val)
         {
             if (uint32 == pool_memory[sig_pool].values[sig_nr].signal_type)
             {
@@ -438,7 +432,7 @@ sp_result_t get_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t 
  * @param[out] map_target  Ptr-u32  The address is written if ret_val is ERR_SP_SUCCESS
  *                         and signal_type is uint32
  * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                      -- error case: ERR_SP_GENERIC_ERROR.
+ *                        error: ERR_SP_GENERIC_ERROR, ERR_SP_INVALID_DTYPE or error from called check_accessor_par()
  */
 sp_result_t map_raw_uint32_rw(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, uint32_t **map_target)
@@ -482,7 +476,7 @@ sp_result_t map_raw_uint32_rw(const sig_nr_pools_t sig_pool, const sig_config_t 
  * @param[out] map_target  Ptr-u32  The address is written if ret_val is ERR_SP_SUCCESS
  *                         and signal_type is uint32
  * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                      -- error case: ERR_SP_GENERIC_ERROR.
+ *                        error: ERR_SP_GENERIC_ERROR or error from called check_accessor_par()
  */
 sp_result_t map_raw_uint32_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, uint32_t **const map_target)
@@ -528,9 +522,7 @@ sp_result_t set_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t 
 {
     sp_result_t ret_val = check_accessor_par(sig_pool, range, sig_nr);
 
-    if ((ERR_SP_SUCCESS == ret_val)
-        && (sig_nr < SP_NR_OF_MEM_CELLS)
-        && (sig_pool < sig_nr_max))
+    if (ERR_SP_SUCCESS == ret_val)
     {
         if (uint32 == pool_memory[sig_pool].values[sig_nr].signal_type)
         {
