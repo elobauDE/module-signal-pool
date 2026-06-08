@@ -150,7 +150,7 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
  * @brief Check the parameters if they are in range and the signal is configured correctly.
  *
  * @param[in]  sig_pool  Related signal pool index
- * @param[in]  range     The pointer to the signal range.
+ * @param[in]  range     The signal range.
  * @param[in]  sig_nr  The signal number which the callee wants to access.
  * @return  sp_result_t  Returns if success: ERR_SP_SUCCESS,
  *                       -- error-1: ERR_SP_SIG_OUT_OF_RANGE
