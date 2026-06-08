@@ -63,8 +63,6 @@ sp_result_t get_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
 sp_result_t set_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t range,
                              const uint32_t sig_nr, const float32_t value);
 
-sp_result_t map_raw_float_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
-                             const uint32_t sig_nr, float32_t **const map_target);
 sp_result_t map_raw_float_rw(const sig_nr_pools_t sig_pool, const sig_config_t range,
                              const uint32_t sig_nr, float32_t **map_target);
 
@@ -73,8 +71,6 @@ sp_result_t get_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t 
 sp_result_t set_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t range,
                               const uint32_t sig_nr, const uint32_t value);
 
-sp_result_t map_raw_uint32_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
-                              const uint32_t sig_nr, uint32_t **const map_target);
 sp_result_t map_raw_uint32_rw(const sig_nr_pools_t sig_pool, const sig_config_t range,
                               const uint32_t sig_nr, uint32_t **map_target);
 

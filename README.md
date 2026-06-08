@@ -1,55 +1,77 @@
 # module-signal-pool
 
-Dieses Repository enthält das ausgelagerte `signal_pool`-Modul aus dem Projekt `sdf-nga-jc-joystick`.
+Dieses Repository kapselt das Signal-Pool-Modul als eigenstaendiges Submodul.
+Der Fokus liegt auf einer einfachen Einbindung in Embedded-Projekte mit klarer
+Trennung von Modulcode und projektspezifischer Konfiguration.
 
-Zweck
-- Das Modul soll als eigenständiges Git-Repository betrieben und anschließend als Submodul in das Hauptprojekt eingebunden werden.
+## Was das Modul beinhaltet
 
-Struktur
-- `0_config/` : Konfigurationsdateien
-- `1_source/srv/signal_pool/` : Quelldateien `signal_pool.c` und `signal_pool.h`
+- Signal-Speicher mit typisierten Signalen (`uint32`, `float32`)
+- Zugriffsfunktionen zum Setzen, Lesen und Mappen von Signalen
+- Pruefungen auf gueltigen Bereich und gueltigen Datentyp
 
-Schnellstart — GitHub / Remote erstellen und pushen
+Quellen:
+- `1_source/srv/signal_pool/signal_pool.c`
+- `1_source/srv/signal_pool/signal_pool.h`
 
-1) Lokales Repository initialisieren und pushen (Standard Git):
+## Repository-Struktur
 
-```bash
-cd module-signal-pool
-git init
-git add .
-git commit -m "Initial import: signal_pool module"
-git branch -M main
-# Remote hinzufügen (ersetzen Sie <OWNER> und ggf. https/ssh-URL):
-git remote add origin git@github.com:<OWNER>/module-signal-pool.git
-git push -u origin main
-```
+- `0_config/`
+	- Platz fuer projektspezifische Konfiguration
+- `1_source/srv/signal_pool/`
+	- Modulimplementierung (`signal_pool.c`, `signal_pool.h`)
 
-2) Alternativ mit GitHub CLI (falls installiert):
+## Einbindung in ein Projekt
 
-```bash
-cd module-signal-pool
-gh repo create <OWNER>/module-signal-pool --public --source=. --remote=origin --push
-```
-
-Als Submodul ins Hauptprojekt einbinden
-
-Im Hauptprojekt-Repository (z.B. `sdf-nga-jc-joystick`) ausführen:
+Empfohlene Einbindung als Git-Submodul unter `1_source/ext/module-signal-pool`:
 
 ```bash
-# ggf. vorhandenen Ordner sichern
-git mv 1_source/srv/signal_pool 1_source/srv/signal_pool.bak
-git commit -m "Move signal_pool for submodule"
-
-# Submodul hinzufügen (ersetzen Sie <GIT_URL>):
-git submodule add <GIT_URL> 1_source/srv/signal_pool
-git commit -m "Add signal_pool as submodule"
-
+git submodule add https://github.com/elobauDE/module-signal-pool.git 1_source/ext/module-signal-pool
 git submodule update --init --recursive
 ```
 
-Hinweise
-- Prüfen Sie nach dem Umzug Includes und SCons-Konfigurationen, falls Pfade angepasst werden müssen.
-- Die Quelldateien enthalten Copyright-Hinweise; behalten Sie diese bei.
+Falls das Submodul bereits in `.gitmodules` eingetragen ist:
 
-Kontakt
-- Bei Fragen zur Integration: Team/Projektverantwortliche des Hauptprojekts.
+```bash
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+## Build-/Include-Integration
+
+Damit das Modul im Zielprojekt gebaut wird, sind in der Regel zwei Punkte noetig:
+
+- Include-Pfad auf den Header setzen:
+	- `1_source/ext/module-signal-pool/1_source/srv/signal_pool`
+- Modulquelle in den Build aufnehmen:
+	- `1_source/ext/module-signal-pool/1_source/srv/signal_pool/signal_pool.c`
+
+## Externe Abhaengigkeiten
+
+Das Modul erwartet folgende projektspezifische Header/Typen:
+
+- `signal_pool_cfg.h`
+	- Konfigurationsdaten und Bereichsfunktionen
+	- z. B. `SP_NR_OF_MEM_CELLS`, `sp_cfg_get_range_begin/end/size(...)`
+- `util_float.h`
+	- Definition von `float32_t`
+
+Diese Dateien werden typischerweise im Hauptprojekt bereitgestellt.
+
+## Oeffentliche API (Kurzuebersicht)
+
+- Initialisierung:
+	- `sp_init_range(...)`
+- Typkonfiguration:
+	- `set_signal_type(...)`
+- Float-Zugriff:
+	- `get_signal_float(...)`, `set_signal_float(...)`
+    - `map_raw_float_rw(...)`
+- Uint32-Zugriff:
+	- `get_signal_uint32(...)`, `set_signal_uint32(...)`
+    - `map_raw_uint32_rw(...)`
+
+## Hinweise
+
+- Bei Pfadaenderungen nach der Integration Includes und Build-Skripte pruefen.
+- Vorhandene Copyright-/Lizenzhinweise in den Quelldateien beibehalten.

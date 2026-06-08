@@ -11,6 +11,7 @@
  */
 #include "signal_pool.h"
 #include "float.h"
+#include "signal_pool_cfg.h"
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -59,27 +60,50 @@ static signal_pool_t  configs[(uint32_t)sp_complete_pool + 1u];
  * @brief Initialize the memory pool
  *
  * @param[in]  sig_pool  Related signal pool index
- * @return  bool  Returns unconditional true
+ * @return  bool  Returns true if initialization was successful, otherwise false
  */
 static bool init_pool_memory(const sig_nr_pools_t sig_pool)
 {
-    for (uint32_t i = 0uL; i < SP_NR_OF_MEM_CELLS; i++)
+    bool init_ok = true;
+    size_t offset = 0; // hint: the offset depends on datatype size
+
+    if (sig_pool >= sig_nr_max)
     {
-        pool_memory[sig_pool].values[i].signal_type = invalid;
-        pool_memory[sig_pool].values[i].signal_id = i;  // signal identifier is the index
+        /* Invalid signal pool index */
+        init_ok = false;
+    }
+    else
+    {
+        for (uint32_t i = 0uL; i < SP_NR_OF_MEM_CELLS; i++)
+        {
+            pool_memory[sig_pool].values[i].signal_type = invalid;
+            pool_memory[sig_pool].values[i].signal_id = i;  // signal identifier is the index
+        }
+
+        // Determine the config information which holds the ranges of the signals
+        // sp_complete_pool is the last element of the enum sig_config_t: describes the full pool
+        for (uint32_t i = 0; i < ((uint32_t)sp_complete_pool + 1u); i++)
+        {
+            /* set start to 0 for the complete pool */
+            if (i == sp_complete_pool)
+            {
+                offset = 0;
+            }
+            configs[i].start = offset;
+            configs[i].size = sp_cfg_get_range_size((sig_config_t)i); /* parasoft-suppress MISRAC2012-RULE_10_5-a "Cast is ok, is checked in loop" */
+
+            if (configs[i].size > (SIZE_MAX - offset))
+            {
+                init_ok = false;
+                break;
+            }
+
+            configs[i].end = offset + configs[i].size;
+            offset += configs[i].size;
+        }
     }
 
-    // Determine the config information which holds the ranges of the signals
-    size_t offset = 0; // hint: the offset depends on datatyp size
-    for (uint32_t i = 0; i < (uint32_t)sp_complete_pool; i++)
-    {
-        configs[i].start = offset;
-        configs[i].size = sp_cfg_get_range_size((sig_config_t)i); /* parasoft-suppress MISRAC2012-RULE_10_5-a "Cast is ok, is checked in loop" */
-        configs[i].end = offset + configs[i].size;
-        offset += configs[i].size;
-    }
-
-    return true;
+    return init_ok;
 }
 
 /*  ---------------  ONE GLOBAL FUNCTION BETWEEN    -----------------------  */
@@ -95,7 +119,7 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
     const signal_pool_t *p_cfg;
     static bool memory_is_initialized[sig_nr_max] = {false};
 
-    if (signal_range > sp_complete_pool)
+    if ((signal_range > sp_complete_pool) || (sig_pool >= sig_nr_max))
     {
         p_cfg = NULL;
     }
@@ -105,7 +129,15 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
         // Initialize the memory just once
         if (memory_is_initialized[sig_pool] == false)
         {
-            memory_is_initialized[sig_pool] = init_pool_memory(sig_pool);
+            if (init_pool_memory(sig_pool))
+            {
+                memory_is_initialized[sig_pool] = true;
+            }
+            else /* memory initialization failed */
+            {
+                /* set pointer to NULL to produce error */
+                p_cfg = NULL;
+            }
         }
     }
 
@@ -118,7 +150,7 @@ const signal_pool_t *sp_init_range(const sig_nr_pools_t sig_pool, const sig_conf
  * @brief Check the parameters if they are in range and the signal is configured correctly.
  *
  * @param[in]  sig_pool  Related signal pool index
- * @param[in]  range     The pointer to the signal range.
+ * @param[in]  range     The signal range.
  * @param[in]  sig_nr  The signal number which the callee wants to access.
  * @return  sp_result_t  Returns if success: ERR_SP_SUCCESS,
  *                       -- error-1: ERR_SP_SIG_OUT_OF_RANGE
@@ -133,7 +165,10 @@ static sp_result_t check_accessor_par(const sig_nr_pools_t sig_pool,
     const size_t end_range = sp_cfg_get_range_end(range);
 
     // Parameter check
-    if ((sig_nr > end_range) || (sig_nr < start_range))
+    if ((sig_nr > end_range)
+        || (sig_nr < start_range)
+        || (sig_nr >= SP_NR_OF_MEM_CELLS)
+        || (sig_pool >= sig_nr_max))
     {
         ret_val = ERR_SP_SIG_OUT_OF_RANGE;
     }
@@ -209,7 +244,7 @@ sp_result_t get_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
     {
         ret_val = check_accessor_par(sig_pool, range, sig_nr);
 
-        if (ret_val == ERR_SP_SUCCESS)
+        if (ERR_SP_SUCCESS == ret_val)
         {
             if (ffp32 == pool_memory[sig_pool].values[sig_nr].signal_type)
             {
@@ -241,57 +276,13 @@ sp_result_t get_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[in]  sig_nr The signal nr which should be mapped
  * @param[out]  map_target  Ptr-float32_t  The address is written if map_target unequal NULL
  *                          and return value fct call check_accessor_par(.) is ERR_SP_SUCCESS
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS, -- error-1: ERR_SP_SIG_OUT_OF_RANGE,
- *                       -- error-2: ERR_SP_SIG_INVALID, -- error-3: ERR_SP_GENERIC_ERROR
+ * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS,
+ *                        error: ERR_SP_GENERIC_ERROR, ERR_SP_INVALID_DTYPE or error from called check_accessor_par()
  */
 sp_result_t map_raw_float_rw(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, float32_t **map_target)
 {
     sp_result_t ret_val = ERR_SP_SUCCESS;
-
-    if (NULL != map_target)
-    {
-        ret_val = check_accessor_par(sig_pool, range, sig_nr);
-
-        if (ret_val == ERR_SP_SUCCESS)
-        {
-            if (ffp32 == pool_memory[sig_pool].values[sig_nr].signal_type)
-            {
-                *map_target = &pool_memory[sig_pool].values[sig_nr].z.val_float;
-            }
-            else
-            {
-                ret_val = ERR_SP_INVALID_DTYPE;
-            }
-        }
-    }
-    else
-    {
-        ret_val = ERR_SP_GENERIC_ERROR;
-    }
-
-    return ret_val;
-}
-
-/**
- * @brief This function assigns the value address of sig_nr to map_target.
- *        Before returning the address sanity checks are done.
- *
- *        The sig_nr needs to be contained in the signal_pool_t range it needs
- *        to be initialized as float, and the map_target needs to point to a pointer.
- *
- * @param[in]  sig_pool The related signal pool
- * @param[in]  range    The signal range where the signal is contained
- * @param[in]  sig_nr   The signal nr which should be mapped
- * @param[out]  map_target  Ptr-float32_t  The address is written if map_target unequal NULL
- *                          and return value fct call check_accessor_par(.) is ERR_SP_SUCCESS
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS, -- error-1: ERR_SP_SIG_OUT_OF_RANGE,
- *                       -- error-2: ERR_SP_SIG_INVALID, -- error-3: ERR_SP_GENERIC_ERROR
- */
-sp_result_t map_raw_float_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
-        const uint32_t sig_nr, float32_t **const map_target)
-{
-    sp_result_t ret_val = ERR_SP_SUCCESS;  // Local return value init with ERR_SP_SUCCESS
 
     if (NULL != map_target)
     {
@@ -324,10 +315,7 @@ sp_result_t map_raw_float_ro(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[in]  range    The signal range which contains sig_nr
  * @param[in]  sig_nr   sig_nr which needs to be configured correctly.
  * @param[in]  value    value to write.
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                       -- error-1: ERR_SP_SIG_OUT_OF_RANGE
- *                       -- error-2: ERR_SP_SIG_INVALID
- *                       -- error-3: ERR_SP_INVALID_DTYPE
+ * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS otherwise: error value.
  */
 sp_result_t set_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, const float32_t value)
@@ -356,8 +344,7 @@ sp_result_t set_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[in] range    The signal range where the signal is contained
  * @param[in] sig_nr   The signal nr of the wanted signal
  * @param[out]  value  Ptr-u32  Points to memory element
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                      -- error case: ERR_SP_GENERIC_ERROR.
+ * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS otherwise: error value.
  */
 sp_result_t get_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, uint32_t *const value)
@@ -401,7 +388,7 @@ sp_result_t get_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t 
  * @param[out] map_target  Ptr-u32  The address is written if ret_val is ERR_SP_SUCCESS
  *                         and signal_type is uint32
  * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                      -- error case: ERR_SP_GENERIC_ERROR.
+ *                        error: ERR_SP_GENERIC_ERROR, ERR_SP_INVALID_DTYPE or error from called check_accessor_par()
  */
 sp_result_t map_raw_uint32_rw(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, uint32_t **map_target)
@@ -433,59 +420,13 @@ sp_result_t map_raw_uint32_rw(const sig_nr_pools_t sig_pool, const sig_config_t 
 }
 
 /**
- * @brief This function assigns the value address of sig_nr to map_target.
- *        Before returning the address sanity checks are done.
- *
- *        The sig_nr needs to be contained in the signal_pool_t range it needs
- *        to be initialized as float, and the map_target needs to point to a pointer.
- *
- * @param[in]  sig_pool The related signal pool
- * @param[in]  range    The signal range where the signal is contained
- * @param[in]  sig_nr   The signal nr which should be mapped
- * @param[out] map_target  Ptr-u32  The address is written if ret_val is ERR_SP_SUCCESS
- *                         and signal_type is uint32
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                      -- error case: ERR_SP_GENERIC_ERROR.
- */
-sp_result_t map_raw_uint32_ro(const sig_nr_pools_t sig_pool, const sig_config_t range,
-        const uint32_t sig_nr, uint32_t **const map_target)
-{
-    sp_result_t ret_val = ERR_SP_SUCCESS;  // Local return variable init with ERR_SP_SUCCESS
-
-    if (NULL != map_target)
-    {
-        ret_val = check_accessor_par(sig_pool, range, sig_nr);
-
-        if (ERR_SP_SUCCESS == ret_val)
-        {
-            if (uint32 == pool_memory[sig_pool].values[sig_nr].signal_type)
-            {
-                *map_target = &pool_memory[sig_pool].values[sig_nr].z.val_uint32;
-            }
-            else
-            {
-                ret_val = ERR_SP_INVALID_DTYPE;
-            }
-        }
-    }
-    else
-    {
-        ret_val = ERR_SP_GENERIC_ERROR;
-    }
-
-    return ret_val;
-}
-
-
-/**
  * @brief  Set the signal uint32
  *
  * @param[in]  sig_pool  Related signal pool index (number)
  * @param[in]  range     The signal range which contains sig_nr
  * @param[in]  sig_nr    signal number which needs to be configured correctly.
  * @param[in]  value  u32  value to write.
- * @return  sp_result_t  if success: ERR_SP_SUCCESS
- *                       -- error:ERR_SP_INVALID_DTYPE
+ * @return  sp_result_t  if success: ERR_SP_SUCCESS otherwise: error value.
  */
 sp_result_t set_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, const uint32_t value)
