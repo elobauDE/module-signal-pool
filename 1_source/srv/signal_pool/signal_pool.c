@@ -325,10 +325,7 @@ sp_result_t map_raw_float_ro(const sig_nr_pools_t sig_pool, const sig_config_t r
  * @param[in]  range    The signal range which contains sig_nr
  * @param[in]  sig_nr   sig_nr which needs to be configured correctly.
  * @param[in]  value    value to write.
- * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS
- *                       -- error-1: ERR_SP_SIG_OUT_OF_RANGE
- *                       -- error-2: ERR_SP_SIG_INVALID
- *                       -- error-3: ERR_SP_INVALID_DTYPE
+ * @return sp_result_t  Returns in normal case: ERR_SP_SUCCESS otherwise: error value.
  */
 sp_result_t set_signal_float(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, const float32_t value)
@@ -487,7 +484,7 @@ sp_result_t map_raw_uint32_ro(const sig_nr_pools_t sig_pool, const sig_config_t 
  * @param[in]  range     The signal range which contains sig_nr
  * @param[in]  sig_nr    signal number which needs to be configured correctly.
  * @param[in]  value  u32  value to write.
- * @return  sp_result_t  if success: ERR_SP_SUCCESS otherwise: error type.
+ * @return  sp_result_t  if success: ERR_SP_SUCCESS otherwise: error value.
  */
 sp_result_t set_signal_uint32(const sig_nr_pools_t sig_pool, const sig_config_t range,
         const uint32_t sig_nr, const uint32_t value)
