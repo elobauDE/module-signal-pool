@@ -1,3 +1,4 @@
+/* parasoft-suppress eloRules-1 "using old coding guideline" */
 /**
  * @file signal_pool.c
  * @brief Definition of signal pool with mapping and get functions.
@@ -10,7 +11,6 @@
  * redistributed in any way.
  */
 #include "signal_pool.h"
-#include "float.h"
 #include "signal_pool_cfg.h"
 #include <stdint.h>
 #include <stdlib.h>
