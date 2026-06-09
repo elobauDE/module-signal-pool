@@ -85,7 +85,7 @@ static bool init_pool_memory(const sig_nr_pools_t sig_pool)
         for (uint32_t i = 0; i < ((uint32_t)sp_complete_pool + 1u); i++)
         {
             /* set start to 0 for the complete pool */
-            if (i == sp_complete_pool)
+            if (i == (uint32_t)sp_complete_pool)
             {
                 offset = 0;
             }
