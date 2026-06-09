@@ -159,18 +159,17 @@ for tool in range(len(env['tools'])):
             print(f'path: {path_armcc} does not exist, using default compiler in path \'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/\'')
             path_armcc = f'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/'
         # Jenkins UUID
-        if env['BUILD_MACHINE'] == 'jenkins':
+        if (BUILD_TARGET == 'lint' or BUILD_TARGET == 'full' or BUILD_TARGET == 'release') and env['BUILD_MACHINE'] == 'jenkins':
             parasoft = f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
         else:
-            parasoft = ''
-        if (BUILD_TARGET == 'vcast' or
-            BUILD_TARGET == 'full' or
-            BUILD_TARGET == 'release'):
-            print('Builder full or vcast or release')
-            parasoft = f'{parasoft}' f'{vcast_path}/vcshell --db={VCAST_FOLDER}/{PROJECT_TARGET}.db -- '
-        else:
-            print('build')
-            parasoft = f'{parasoft}'
+            if (BUILD_TARGET == 'vcast' or
+                BUILD_TARGET == 'full' or
+                BUILD_TARGET == 'release'):
+                print('Builder full or vcast or release')
+                parasoft = f'{vcast_path}/vcshell --db={VCAST_FOLDER}/{PROJECT_TARGET}.db -- '
+            else:
+                print('build')
+                parasoft = ''
 
         #Configure PATH
         env.PrependENVPath('PATH', path_armcc)
