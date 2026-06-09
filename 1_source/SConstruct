@@ -174,9 +174,8 @@ else:
 # fmt: on
 
 # Create Project Folders
-if env["BUILD_TARGET"] == "build" or env["BUILD_TARGET"] == "full" or env["BUILD_TARGET"] == "release":
-    Execute(Delete("build-uv"))
 
+Execute(Delete("build-uv"))
 Execute(Mkdir(f"build-uv/{prj_target}/build"))
 Execute(Mkdir(f"build-uv/{prj_target}/doc"))
 Execute(Mkdir(f"build-uv/{prj_target}/lint"))
