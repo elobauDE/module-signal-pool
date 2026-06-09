@@ -159,7 +159,8 @@ for tool in range(len(env['tools'])):
             print(f'path: {path_armcc} does not exist, using default compiler in path \'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/\'')
             path_armcc = f'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/'
         # Jenkins UUID
-        if (BUILD_TARGET == 'lint' or BUILD_TARGET == 'full' or BUILD_TARGET == 'release') and env['BUILD_MACHINE'] == 'jenkins':
+        if (BUILD_TARGET == 'lint' and env['BUILD_MACHINE'] == 'jenkins'):
+            print('Prepare linting with Parasoft C/C++Test')
             parasoft = f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
         else:
             if (BUILD_TARGET == 'vcast' or
