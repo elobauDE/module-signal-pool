@@ -18,3 +18,16 @@ Thumbs.db
 # Backup files
 *~
 *.bak
+
+#ignore vcast build data
+vcastDataServer.log
+1_source/management
+1_source/xml_data
+3_test/dynamic/module-signal-pool/vc_project/module-signal-pool_project/build.vcw
+3_test/dynamic/module-signal-pool/vc_project/module-signal-pool_project/vcdb_out.txt
+3_test/dynamic/module-signal-pool/vc_project/module-signal-pool_project/build/
+3_test/dynamic/module-signal-pool/vc_project/module-signal-pool_project/constants/
+3_test/dynamic/module-signal-pool/vc_project/module-signal-pool_project/lock/
+3_test/dynamic/module-signal-pool/vc_project/module-signal-pool_project/logs/
+*.QIK
+3_test/dynamic/module-signal-pool.db
