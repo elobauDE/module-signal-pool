@@ -302,9 +302,19 @@ if (BUILD_TARGET == 'full' or
     for path in env['CPPPATH']:
         print(path)
     # Delete Parasoft Files
-    Delete("cpptest.bdf")
-    Delete(".cpptest")
-    Delete(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db')
+
+    if os.path.exists("cpptest.bdf"):
+        os.remove("cpptest.bdf")
+
+    if os.path.exists(".cpptest"):
+        os.remove(".cpptest")
+
+    if os.path.exists(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db'):
+        os.remove(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db')
+
+    #Delete("cpptest.bdf")
+    #Delete(".cpptest")
+    #Delete(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db')
 
     # build elf file
     # prg_elf = env.Program(
