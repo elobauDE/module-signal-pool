@@ -1,3 +1,4 @@
+from ast import Delete
 import glob
 import os
 import sys
@@ -35,15 +36,15 @@ RELEASE_NOTES = env['RELEASE_NOTES']
 variant_folder = f'build-uv/{PROJECT_TARGET}/{BUILD_TARGET}'
 if env['APP_MAJOR'] == 'null': env['APP_MAJOR'] = 0
 if env['APP_MINOR'] == 'null': env['APP_MINOR'] = 0
-if env['APP_DEVEL'] == 'null': env['APP_DEVEL'] = 0
 if env['APP_BUILD'] == 'null': env['APP_BUILD'] = 0
+if env['APP_DEVEL'] == 'null': env['APP_DEVEL'] = 0
 
 APP_MAJOR = int(env['APP_MAJOR'])
 APP_MINOR = int(env['APP_MINOR'])
-APP_DEVEL = int(env['APP_DEVEL'])
 APP_BUILD = int(env['APP_BUILD'])
+APP_DEVEL = int(env['APP_DEVEL'])
 
-PROJECT_VERSION = "V{0:02d}_{1:02d}_{2:02d}_{3:02d}".format(APP_MAJOR, APP_MINOR, APP_DEVEL, APP_BUILD)
+PROJECT_VERSION = "V{0:02d}_{1:02d}_{2:02d}_{3:02d}".format(APP_MAJOR, APP_MINOR, APP_BUILD, APP_DEVEL)
 BUILD_IDENTIFIER = f'{PROJECT_NUMBER}_{PROJECT_TARGET}_{PROJECT_VERSION}'
 
 #####
@@ -115,7 +116,7 @@ for tool in range(len(env['tools'])):
 
         #check if tool exists
         if os.path.exists(tool_user_dir) == False:
-            if (tool_name != 'parasoft') & (tool_name != 'compiler'):
+            if (tool_name != 'parasoft') and (tool_name != 'compiler'):
                 if os.path.exists(tool_server_dir) == True:
                     print("Copying ... ", end = '')
                     shutil.copytree(tool_server_dir, tool_user_dir)
@@ -143,6 +144,10 @@ for tool in range(len(env['tools'])):
     path_common = env['USERTOOLDIR'] + tool_name + '/' + tool_ver_file
     if tool_name == 'parasoft':
         parasoft_path = tool_custom_path
+        print(parasoft_path)
+    if tool_name == 'vcast':
+        vcast_path = tool_custom_path
+        print(vcast_path)
     if tool_name == 'keil':
         build_target = BUILD_TARGET
         prj_target = PROJECT_TARGET
@@ -157,8 +162,14 @@ for tool in range(len(env['tools'])):
         if env['BUILD_MACHINE'] == 'jenkins':
             parasoft = f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
         else:
-            parasoft = ''
-
+            if (BUILD_TARGET == 'vcast' or
+                BUILD_TARGET == 'full' or
+                BUILD_TARGET == 'release'):
+                print('Builder full or vcast or release')
+                parasoft = f'{vcast_path}/vcshell --db={VCAST_FOLDER}/{PROJECT_TARGET}.db -- '
+            else:
+                print('build')
+                parasoft = ''
 
         #Configure PATH
         env.PrependENVPath('PATH', path_armcc)
@@ -166,8 +177,10 @@ for tool in range(len(env['tools'])):
 
         # Configure Compiler
         env['AR'] = parasoft + path_armcc + 'armar'
-        env['AS'] = parasoft + path_armcc + 'armclang'
-        env['CC'] = parasoft + path_armcc + 'armclang'
+        env['AS'] = parasoft + path_armcc + 'ArmClang'
+        env['CC'] = parasoft + path_armcc + 'ArmClang'
+        print('Compiler: ')
+        print(env['CC'])
         env['LINK'] = parasoft + path_armcc + 'armlink'
         env[tool_name] = tool_custom_path
     elif env['tools'][tool][2] != '':
@@ -233,12 +246,12 @@ SetupBufferedOutput(env)
 def project_version_action(target, source, env):
     if (APP_MAJOR == 0 and
         APP_MINOR == 0 and
-        APP_DEVEL == 0 and
-        APP_BUILD == 0):
+        APP_BUILD == 0 and
+        APP_DEVEL == 0):
         version.versions(VERSiON_FILE, VERSiON_FILE, 1)
     else:
         version.versions(VERSiON_FILE, VERSiON_FILE, 3,
-        APP_MAJOR, APP_MINOR, APP_DEVEL, APP_BUILD)
+        APP_MAJOR, APP_MINOR, APP_BUILD, APP_DEVEL)
     return 0
 
 #####
@@ -287,8 +300,9 @@ if (BUILD_TARGET == 'full' or
     for path in env['CPPPATH']:
         print(path)
     # Delete Parasoft Files
-    Execute(Delete("cpptest.bdf"))
-    Execute(Delete(".cpptest"))
+    Delete("cpptest.bdf")
+    Delete(".cpptest")
+    Delete(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db')
 
     # build elf file
     # prg_elf = env.Program(
@@ -320,28 +334,86 @@ if (BUILD_TARGET == 'lint' or
         env.Default('install')
 
 #####
-# Doxygen
-#####
-if (env['BUILD_TARGET'] == 'doc' or
-    env['BUILD_TARGET'] == 'full' or
-    env['BUILD_TARGET'] == 'release'):
-    Exit(0)
-
-#####
 # VectorCAST
 #####
-if (env['BUILD_TARGET'] == 'vcast' or
-    env['BUILD_TARGET'] == 'full' or
-    env['BUILD_TARGET'] == 'release'):
-    Exit(0)
+if (BUILD_TARGET == 'vcast' or
+    BUILD_TARGET == 'full' or
+    BUILD_TARGET == 'release'):
+    vcast_path = VCAST_INSTALL_DIR
+    for tool in range(len(env['tools'])):
+        if env['tools'][tool][0]== 'vcast':
+            vcast_path = env['tools'][tool][2]
+            print("use following string")
+            print(vcast_path)
+    def vcast_builder(env, target, source):
+        env['ENV']['WORKSPACE'] = PROJECT_VCAST_WORKDIR
+        env['ENV']['SRC_DIR1'] = PROJECT_INCLUDE.replace(SOURCE_FOLDER, '')
+        env['ENV']['VECTOR_LICENSE_FILE'] = '27000@vm-tool2'
+        env['ENV']['LM_APP_DISABLE_CCHE_READ'] = '1'
+        env['ENV']['path'] = '%VECTORCAST_DIR%\\MinGW\\bin;C:\\Program Files\\eclipse\\doxygen_1a;%path%'
+        env['ENV']['VCAST_RPTS_PRETTY_PRINT_HTML'] = 'FALSE'
+        env['ENV']['VCAST_RPTS_SELF_CONTAINED'] = 'TRUE'
+        WAIT_LOOP_CNT = '6'
+        WAIT_TIME_SECS = '120'
+        env['ENV']['VCAST_REPORT'] = PROJECT_BUILD
+        PROJECT_PREFIX = f'{PROJECT_BUILD}\\{PROJECT_TARGET}'
+        VCAST_SRC_DIR = f'{vcast_path}\\vpython {VCAST_FOLDER}\\vc_scripts\\'
+        VCM_FILE = f'{PROJECT_VCAST_WORKDIR}\\{PROJECT_TARGET}_project.vcm'
+        # Delete and build VCast vcshell database if module tests exist
+        #Execute(Delete(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db'))
+        #commandToRun = f'{vcast_path}\\vcshell c:\\Keil_v5\\UV4\\uv4.exe -r -j0 -l build.log {PROJECT_SOURCE}\\{PROJECT_TARGET}.uvprojx --db={VCAST_FOLDER}/{PROJECT_TARGET}.db'
+        #print('Running: ' + commandToRun)
+        #subprocess.call (commandToRun)
+        composed_manage = f'{VCAST_SRC_DIR}managewait.py --wait_time {WAIT_TIME_SECS} --wait_loops {WAIT_LOOP_CNT} --command_line "--project {VCM_FILE} '
+        composed_junit = f'{VCAST_SRC_DIR}generate-results.py --junit --wait_time {WAIT_TIME_SECS} --wait_loops {WAIT_LOOP_CNT} "{VCM_FILE}" --buildlog complete_build.log'
+        composed_cobertura = f'{VCAST_SRC_DIR}cobertura.py {VCM_FILE}'
+        # This is a list of steps to compile and run the tests with managewait.py and generate-results.
+        vcast_steps = [[composed_manage, '--status"'],
+                       [composed_manage, '--force --release-locks "'],
+                       [composed_manage, '--config VCAST_CUSTOM_REPORT_FORMAT=HTML"'],
+                       ['del command.log > nul 2>&1', ''],
+                       [composed_manage, '--build-execute --incremental --output ' +  PROJECT_PREFIX + '_rebuild.html"'],
+                       ['copy command.log complete_build.log', ''],
+                       ['copy ', PROJECT_PREFIX + '_rebuild.html ' + PROJECT_PREFIX + '_rebuild.html_tmp'],
+                       [composed_junit, ''],
+                       [VCAST_SRC_DIR + 'full_report_no_toc.py ', VCM_FILE],
+                       [VCAST_SRC_DIR + 'fixup_reports.py ', PROJECT_PREFIX + '_rebuild.html_tmp'],
+                       [composed_manage, '--full-status=' + PROJECT_PREFIX + '_full_report.html"'],
+                       [composed_manage, '--create-report=aggregate   --output=' + PROJECT_PREFIX + '_aggregate_report.html"'],
+                       [composed_manage, '--create-report=metrics     --output=' + PROJECT_PREFIX + '_metrics_report.html"'],
+                       [composed_manage, '--create-report=environment --output=' + PROJECT_PREFIX + '_environment_report.html"'],
+                       [composed_cobertura, '']]
+        for step_cmd in vcast_steps:
+            _cmd, _parameter = step_cmd
+            env.Execute(_cmd + _parameter)
+    if MODULE_TESTS:
+        print('Running VCAST Module Tests')
+        vcast = env.Command([PROJECT_TARGET + '_aggregate_report.html', PROJECT_TARGET + '_metrics_report.html', PROJECT_TARGET +'_environment_report.html', PROJECT_TARGET +'_project_full_report.html'],
+                       None, vcast_builder)
+    else:
+        print('No VCAST Module Tests implemented, skipping VCAST execution')
+        # dummy command if no module tests exist
+        vcast = env.Command("coverage_results_dummy.xml", f'{PROJECT_SOURCE}\\coverage_results_dummy.xml',
+                   [
+                       Copy("$TARGET", "$SOURCE"),
+                   ])
+    AlwaysBuild(vcast)
+
+#####
+# Doxygen
+#####
+# if (BUILD_TARGET == 'doc' or
+#     BUILD_TARGET == 'full' or
+#     BUILD_TARGET == 'release'):
+    #Exit(0)
 
 
 
 #####
 # Copy Artifacts
 #####
-if (env['BUILD_TARGET'] == 'copy' or
-    env['BUILD_TARGET'] == 'release'):
+if (BUILD_TARGET == 'copy' or
+    BUILD_TARGET == 'release'):
 
     # Build deliveries only on tag
     final_lint  = env.Command(PROJECT_NUMBER + '_staticcodeanalysis.pdf', PROJECT_BUILD +'\\..\\lint\\report.pdf', Copy("$TARGET", "$SOURCE"))

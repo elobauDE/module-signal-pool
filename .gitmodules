@@ -1,3 +1,6 @@
 [submodule "1_source/ext/base_prj"]
 	path = 1_source/ext/base_prj
 	url = https://github.com/elobauDE/prj-demo-scons-subprj-app.git
+[submodule "3_test/dynamic/vc_scripts"]
+	path = 3_test/dynamic/vc_scripts
+	url = https://github.com/elobauDE/vc_scripts.git

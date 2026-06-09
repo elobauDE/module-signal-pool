@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="36">
+  <config>
+    <config>
+      <key>COVERAGE_TYPE</key>
+      <value>statement</value>
+      <key>TEST_CASE_TIMEOUT</key>
+      <value>10</value>
+      <key>VCDB_FILENAME</key>
+      <value>V:\3_test\dynamic\module-signal-pool.db</value>
+      <key>VCDB_CMD_VERB</key>
+      <value>ArmClang</value>
+      <key>VCAST_CUSTOM_REPORT_FORMAT</key>
+      <value>HTML</value>
+    </config>
+    <saved-logs>5</saved-logs>
+    <build-directory-naming-strategy>COMPRESSED</build-directory-naming-strategy>
+  </config>
+  <project-id>1781006861</project-id>
+  <factor-config-options>0</factor-config-options>
+  <environment name="SIGNAL_POOL" type="UNIT">
+    <language>2</language>
+    <imported-from-env-script>../vc_ut_scripts/SIGNAL_POOL.env</imported-from-env-script>
+    <is-monitored>0</is-monitored>
+    <config>
+      <original-environment-directory>../vc_ut_scripts</original-environment-directory>
+    </config>
+  </environment>
+  <group name="ST-Group"/>
+  <group name="UT-Group-VectorCAST_MinGW__C">
+    <environment name="SIGNAL_POOL"/>
+  </group>
+  <compiler>
+    <compiler>
+      <name>SystemTestingCompilerNode</name>
+    </compiler>
+    <testsuite name="SystemTesting">
+      <group name="ST-Group"/>
+    </testsuite>
+  </compiler>
+  <compiler>
+    <compiler>
+      <name>VectorCAST_MinGW__C</name>
+      <config>
+        <config>
+          <key>C_COMPILER_TAG</key>
+          <value>BUILTIN_MINGW_63_C</value>
+          <key>VCAST_VCDB_FLAG_STRING</key>
+          <value></value>
+        </config>
+      </config>
+    </compiler>
+    <testsuite name="UnitTesting">
+      <group name="UT-Group-VectorCAST_MinGW__C"/>
+    </testsuite>
+  </compiler>
+</project>

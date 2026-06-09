@@ -48,7 +48,7 @@ env = Environment(ENV = os.environ, variables = vars, tools=['gcc','g++','gnulin
 if env['BUILD_MACHINE'] != 'jenkins':
     scons_compiledb.enable(env)
 if(env['PRJ_TARGET'] == ''):
-    prj_target = 'module_config_store'
+    prj_target = PROJECT_NUMBER
 else:
     prj_target = env['PRJ_TARGET']
 keil_build_target = 'Release'
@@ -152,28 +152,29 @@ env.Append(CPPDEFINES = [
 if env['BUILD_MACHINE'] == 'jenkins':
     env['tools'] = [
     #   folder name              version         path                                        precise name for Polarion 'Software Release History' document
-        ['parasoft',            '2024.1',       'D:/parasoft/cpptest_standard/cpptest24',      'Parasoft C/C++Test'         ],
+        ['parasoft',            '2024.1',       'D:/parasoft/cpptest_standard/cpptest24',    'Parasoft C/C++Test'         ],
+        ['vcast',               '26',           'C:/VCAST/26',                               'VectorCAST'                 ],
         ['doxygen',             '1.9.7',        'C:/Program Files/doxygen/bin',              'Doxygen'                    ],
         ['keil',                '5.38.0.0',     'C:/Keil_v5',                                'Keil uVision IDE'           ],
         ['srec',                '1.6.4',        '',                                          'SRecord'                    ],
         ['STM32_Programmer',    '2.5.0',        '',                                          'STM32 Programmer'           ],
-        ['vcast',               '26',           'C:/VCAST/26',                               'VectorCAST'                 ],
         ['compiler',            '6_16_2',       '',                                          'ARMCLANG Compiler'             ]
     ]
 else:
     env['tools'] = [
         ['parasoft',            '2024.1',       'C:/Program Files/parasoft/cpptest/cpptest'         ],
+        ['vcast',               '26',           'C:/VCAST/26'                                       ],
         ['doxygen',             '1.9.5',        ''                                                  ],
         ['keil',                '5.38.0.0',     'C:/Keil_v5'                                        ],
         ['srec',                '1.6.4',        ''                                                  ],
         ['STM32_Programmer',    '2.5.0',        ''                                                  ],
-        ['vcast',               '26',           'C:/VCAST/26'                                       ],
+
         ['compiler',            '6_16_2',       ''                                                  ],
     ]
 # fmt: on
 
 # Create Project Folders
-if env["BUILD_TARGET"] == "build":
+if env["BUILD_TARGET"] == "build" or env["BUILD_TARGET"] == "full" or env["BUILD_TARGET"] == "release":
     Execute(Delete("build-uv"))
 
 Execute(Mkdir(f"build-uv/{prj_target}/build"))
