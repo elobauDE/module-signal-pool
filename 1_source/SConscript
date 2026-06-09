@@ -162,14 +162,15 @@ for tool in range(len(env['tools'])):
         if env['BUILD_MACHINE'] == 'jenkins':
             parasoft = f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
         else:
-            if (BUILD_TARGET == 'vcast' or
-                BUILD_TARGET == 'full' or
-                BUILD_TARGET == 'release'):
-                print('Builder full or vcast or release')
-                parasoft = f'{vcast_path}/vcshell --db={VCAST_FOLDER}/{PROJECT_TARGET}.db -- '
-            else:
-                print('build')
-                parasoft = ''
+            parasoft = ''
+        if (BUILD_TARGET == 'vcast' or
+            BUILD_TARGET == 'full' or
+            BUILD_TARGET == 'release'):
+            print('Builder full or vcast or release')
+            parasoft = f'{parasoft}' f'{vcast_path}/vcshell --db={VCAST_FOLDER}/{PROJECT_TARGET}.db -- '
+        else:
+            print('build')
+            parasoft = f'{parasoft}'
 
         #Configure PATH
         env.PrependENVPath('PATH', path_armcc)
