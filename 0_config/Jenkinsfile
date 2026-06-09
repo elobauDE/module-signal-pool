@@ -1,0 +1,17 @@
+@Library('elobau_shared_libs_git@dev')_
+
+// project specific parameters
+
+// url of Project
+global_jenkinsfile.Source_Rep_Url = 'https://github.com/elobauDE/module-signal-pool.git'
+
+// has to be an existing integration test job from testing department
+global_jenkinsfile.Integration_Test_Job= 'Sandbox/IntegrationTest/Archive/IntegrationTestPipeline'
+
+global_jenkinsfile.Main_Project_Target = "module-signal-pool"
+
+global_jenkinsfile.Second_Project_Target = ""
+
+// Call global Pipelines
+global_jenkinsfile()
+

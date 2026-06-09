@@ -1,0 +1,189 @@
+import os
+import scons_compiledb
+
+PROJECT_NUMBER  = 'module-signal-pool'
+#don't use the default environment
+DefaultEnvironment(tools=[])
+
+# Add Variables to environment
+vars = Variables(None, ARGUMENTS)
+vars.AddVariables(
+    EnumVariable('PRJ_TARGET', 'all', 'module-signal-pool',
+                allowed_values=('all', 'module-signal-pool'),
+                map={},
+                ignorecase=2),
+    EnumVariable('BUILD_TARGET', 'full,build,release,doc,vcast,lint,copy,tool_doc', 'full',
+                allowed_values=('full', 'build','release','doc','vcast','lint','copy', 'tool_doc'),
+                map={},
+                ignorecase=2),
+    EnumVariable('BUILD_MACHINE', 'jenkins,local', 'jenkins',
+                allowed_values=('jenkins','local'),
+                map={},
+                ignorecase=2),
+    ('APP_MAJOR', 'Set to major build number', '0'),
+    ('APP_MINOR', 'Set to minor build number', '0'),
+    ('APP_DEVEL', 'Set to devel build number', '0'),
+    ('APP_BUILD', 'Set to build build number', '0'),
+    ('PROJECT_NUMBER', '', 'module-signal-pool'),
+    ('PROJECT_NAME', 'Name of the project', 'module-signal-pool'),
+    ('COMPILER_VERSION', 'ARMCC Compiler Version', '6_16_2'),
+    ('VCAST_INSTALL_DIR', 'VectorCAST Installation Directory', 'C:\\VCAST\\26'),
+    ('VCAST_FOLDER', 'Directory of the VCAST project', '3_test\\dynamic'),
+    ('CONFIG_FOLDER', 'config directory', '0_config'),
+    ('SOURCE_FOLDER', 'source directory', '1_source'),
+    ("DOC_FOLDER", "doc directory", "2_doc"),
+    ('DELIVERY_FOLDER', 'delivery directory', '4_delivery'),
+    ('VERSION_FILE', 'file for the software version, path starting from the source directory', '\\app\\cfg\\app_version.h'),
+    ('MODULE_TESTS', 'set to true if vcast module tests are implemented', True),
+    ('POLARION_PROJECT', 'project id of polarion project', 'emb_baukasten'),
+    ('URL', 'location of code in source code management tool', ''),
+    ('RELEASE_NAME', 'string composed out of build parameters', ''),
+    ('RELEASE_NOTES', 'release description and release notes', '')
+)
+
+# Only specify the tools we're using
+#tools=['doxygen']
+#env = Environment(ENV = os.environ, variables = vars, tools=['gcc','g++','gnulink','ar', 'as', 'pdftex'])
+env = Environment(ENV = os.environ, variables = vars, tools=['gcc','g++','gnulink','ar', 'as', 'pdftex'])
+if env['BUILD_MACHINE'] != 'jenkins':
+    scons_compiledb.enable(env)
+if(env['PRJ_TARGET'] == ''):
+    prj_target = 'module_config_store'
+else:
+    prj_target = env['PRJ_TARGET']
+keil_build_target = 'Release'
+
+#VariantDir
+variant_folder = 'build-uv/' + prj_target + '/' + env['BUILD_TARGET']
+
+# compiler flags
+env.Append(CCFLAGS = [
+    '-xc',
+    '-std=c11',
+    '--target=arm-arm-none-eabi',
+    '-mcpu=cortex-m4',
+    '-mfpu=fpv4-sp-d16',
+    '-mfloat-abi=hard',
+    '-c',
+    '-fno-rtti',
+    '-funsigned-char',
+    #'-gdwarf-4', #debug
+    '-O1',
+    '-fno-function-sections',
+    '-Wno-packed',
+    '-Wno-missing-variable-declarations',
+    '-Wno-missing-prototypes',
+    '-Wno-missing-noreturn',
+    '-Wno-sign-conversion',
+    '-Wno-nonportable-include-path',
+    '-Wno-reserved-id-macro',
+    '-Wno-unused-macros',
+    '-Wno-documentation-unknown-command',
+    '-Wno-documentation',
+    '-Wno-license-management',
+    '-Wno-parentheses-equality',
+    '-Wno-covered-switch-default',
+    '-Wno-unreachable-code-break',
+    '-Qunused-arguments',
+    '-munaligned-access',
+    '-fshort-enums',
+    '-D__UVISION_VERSION=540',
+    '-DSTM32G474xx',
+    '-DAPPLY_ERRATUM_837070="0"',
+])
+
+# assembler flags
+env.Append(ASFLAGS = [
+    '--target=arm-arm-none-eabi',
+    '-mcpu=cortex-m4',
+    '-mfpu=fpv4-sp-d16',
+    '-mfloat-abi=hard',
+    '-masm=auto',
+    '-c',
+    #'-gdwarf-4', #debug
+    '-Wno-unused-command-line-argument',
+    '-Wa,armasm,--pd=__UVISION_VERSION SETA 540',
+    '-Wa,armasm,--pd=STM32G474xx SETA 1',
+    '-Wa,armasm,--pd=APPLY_ERRATUM_837070 SETA 0',
+])
+
+
+# linker flags
+env.Append(LINKFLAGS = [
+    '--cpu=Cortex-M4.fp.sp',
+    '--nodebug',
+    '--diag_suppress=6314',
+    '--strict',
+    '--scatter=' + prj_target + '.sct',
+    '--entry=Reset_Handler',
+    '--map',
+    '--info=summarysizes',
+    '--info=sizes',
+    '--info=totals',
+    '--info=unused',
+    '--info=veneers',
+    '--verbose',
+    '--list=_err.txt',
+    '--pad=0xFF',
+    '--keep=startup_a.o(VECTORS)',
+    '--remove',
+    '--summary_stderr',
+    '--map',
+    '--load_addr_map_info',
+    '--xref',
+    '--callgraph',
+    '--symbols',
+    #'ext\\STM32_Safety_STL\\G4\\STM32_Safety_STL\\Lib\\STL_Lib.a'
+
+])
+
+#####
+# Compiler Defines
+#####
+env.Append(CPPDEFINES = [
+    'STM32G474xx',
+    'APPLY_ERRATUM_837070=0'
+])
+
+#############################################################################
+## Project Tool Configuration
+#############################################################################
+# fmt: off
+if env['BUILD_MACHINE'] == 'jenkins':
+    env['tools'] = [
+    #   folder name              version         path                                        precise name for Polarion 'Software Release History' document
+        ['parasoft',            '2024.1',       'D:/parasoft/cpptest_standard/cpptest24',      'Parasoft C/C++Test'         ],
+        ['doxygen',             '1.9.7',        'C:/Program Files/doxygen/bin',              'Doxygen'                    ],
+        ['keil',                '5.38.0.0',     'C:/Keil_v5',                                'Keil uVision IDE'           ],
+        ['srec',                '1.6.4',        '',                                          'SRecord'                    ],
+        ['STM32_Programmer',    '2.5.0',        '',                                          'STM32 Programmer'           ],
+        ['vcast',               '26',           'C:/VCAST/26',                               'VectorCAST'                 ],
+        ['compiler',            '6_16_2',       '',                                          'ARMCLANG Compiler'             ]
+    ]
+else:
+    env['tools'] = [
+        ['parasoft',            '2024.1',       'C:/Program Files/parasoft/cpptest/cpptest'         ],
+        ['doxygen',             '1.9.5',        ''                                                  ],
+        ['keil',                '5.38.0.0',     'C:/Keil_v5'                                        ],
+        ['srec',                '1.6.4',        ''                                                  ],
+        ['STM32_Programmer',    '2.5.0',        ''                                                  ],
+        ['vcast',               '26',           'C:/VCAST/26'                                       ],
+        ['compiler',            '6_16_2',       ''                                                  ],
+    ]
+# fmt: on
+
+# Create Project Folders
+if env["BUILD_TARGET"] == "build":
+    Execute(Delete("build-uv"))
+
+Execute(Mkdir(f"build-uv/{prj_target}/build"))
+Execute(Mkdir(f"build-uv/{prj_target}/doc"))
+Execute(Mkdir(f"build-uv/{prj_target}/lint"))
+Execute(Mkdir(f"build-uv/{prj_target}/vcast"))
+Execute(Mkdir(f"build-uv/{prj_target}/copy"))
+
+Export("vars")
+Export("prj_target")
+Export("keil_build_target")
+
+SConscript('SConscript', variant_dir=variant_folder, duplicate=0, exports='env')

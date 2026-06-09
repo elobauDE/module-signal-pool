@@ -1,0 +1,353 @@
+import glob
+import os
+import sys
+import multiprocessing
+import scons_compiledb
+import time
+from io import StringIO
+import subprocess
+import shutil
+import SCons
+
+Import('prj_target')
+Import('vars')
+Import('keil_build_target')
+Import('env')
+
+
+#####
+# Project Settings
+#####
+PROJECT_NUMBER = env['PROJECT_NUMBER']
+PROJECT_TARGET = prj_target
+PROJECT_NAME = PROJECT_TARGET
+BUILD_TARGET = env['BUILD_TARGET']
+COMPILER_VERSION = ''
+KEIL_BUILD_TARGET = keil_build_target
+VCAST_INSTALL_DIR = env['VCAST_INSTALL_DIR']
+SOURCE_FOLDER = env['SOURCE_FOLDER']
+MODULE_TESTS = env['MODULE_TESTS']
+SCM_URL = env['URL']
+RELEASE_NAME = env['RELEASE_NAME']
+RELEASE_NOTES = env['RELEASE_NOTES']
+
+# VariantDir
+variant_folder = f'build-uv/{PROJECT_TARGET}/{BUILD_TARGET}'
+if env['APP_MAJOR'] == 'null': env['APP_MAJOR'] = 0
+if env['APP_MINOR'] == 'null': env['APP_MINOR'] = 0
+if env['APP_DEVEL'] == 'null': env['APP_DEVEL'] = 0
+if env['APP_BUILD'] == 'null': env['APP_BUILD'] = 0
+
+APP_MAJOR = int(env['APP_MAJOR'])
+APP_MINOR = int(env['APP_MINOR'])
+APP_DEVEL = int(env['APP_DEVEL'])
+APP_BUILD = int(env['APP_BUILD'])
+
+PROJECT_VERSION = "V{0:02d}_{1:02d}_{2:02d}_{3:02d}".format(APP_MAJOR, APP_MINOR, APP_DEVEL, APP_BUILD)
+BUILD_IDENTIFIER = f'{PROJECT_NUMBER}_{PROJECT_TARGET}_{PROJECT_VERSION}'
+
+#####
+# Project Folders
+#####
+PROJECT_CONFIG = Dir("#..\\" + env['CONFIG_FOLDER']).abspath
+VCAST_FOLDER = Dir('#..\\' + env['VCAST_FOLDER']).abspath
+PROJECT_VCAST_WORKDIR = Dir(f'{VCAST_FOLDER}\\{PROJECT_TARGET}\\vc_project').abspath
+PROJECT_BUILD = Dir('.').abspath
+PROJECT_SOURCE = Dir('#').abspath
+PROJECT_INCLUDE = Dir('#').abspath
+PROJECT_DELIVERY = Dir("#..\\" + env['DELIVERY_FOLDER']).abspath
+
+VERSiON_FILE = PROJECT_SOURCE + env['VERSION_FILE']
+
+
+#####
+# Environment Variables
+#####
+env['ENV']['PRJ_TARGET'] = PROJECT_TARGET
+env['ENV']['BUILD_TARGET'] = BUILD_TARGET
+env['PROGSUFFIX'] = '.elf'
+env['OBJSUFFIX']   = ".o"
+env['TARGET_ARCH'] = "arm"
+env['USERTOOLDIR'] = "C:/Tools/"
+env['SERVERTOOLDIR'] = "R:/Entwicklungstools/EBES_toolchain"
+
+env['CCCOMSTR'] = "Compiling $SOURCE"
+env['LINKCOMSTR'] = "Linking $TARGET"
+env['ASCOMSTR'] = "Assembling $SOURCE"
+env["TEMPFILE"] = SCons.Platform.TempFileMunge
+env["LINKCOM"] = "$LINK -o $TARGET $LINKFLAGS ${TEMPFILE('$SOURCES')}"
+env["TEMPFILEPREFIX"] = '--via='
+env.Append(LINKFLAGS=['--list=' + variant_folder + '/' + PROJECT_TARGET + '.map'])
+
+
+#############################################################################
+## Try to detect tools
+#############################################################################
+
+tool_name = ''
+tool_ver = ''
+failure = 0
+time_start = time.time()
+
+# Check that C:/Tools exists
+if os.path.exists('C:\\Tools') == False:
+    os.mkdir('C:\\Tools')
+
+for tool in range(len(env['tools'])):
+    if env['tools'][tool][0]== 'compiler':
+        COMPILER_VERSION = env['tools'][tool][1]
+    else:
+        tool_name = env['tools'][tool][0]
+        tool_ver = env['tools'][tool][1]
+        tool_ver_file = tool_ver.replace('.','_')
+        tool_custom_path = env['tools'][tool][2]
+
+        print("Checking for " + tool_name + " ... ", end = '')
+
+        # clean toolname
+        tool_server_dir = env['SERVERTOOLDIR'] + '/' + tool_name + '/' + tool_ver_file
+        if env['tools'][tool][2] == '':
+            tool_user_dir = env['USERTOOLDIR'] + tool_name + '/' + tool_ver_file
+        else:
+            # tool must be manually installed
+            tool_user_dir = tool_custom_path
+
+
+        #check if tool exists
+        if os.path.exists(tool_user_dir) == False:
+            if (tool_name != 'parasoft') & (tool_name != 'compiler'):
+                if os.path.exists(tool_server_dir) == True:
+                    print("Copying ... ", end = '')
+                    shutil.copytree(tool_server_dir, tool_user_dir)
+                else:
+                    print("Tool not found, install manually ... ", end = '')
+                    failure = 1
+
+        # Print Tool Version
+        print(tool_ver)
+
+if failure == 1:
+    time_end = time.time()
+    print("Checking tool versions failed (" + str(round((time_end - time_start),1)) + "s)")
+    Exit(2)
+
+#############################################################################
+## Configure Tools in Environment
+#############################################################################
+
+for tool in range(len(env['tools'])):
+    tool_name = env['tools'][tool][0]
+    tool_ver = env['tools'][tool][1]
+    tool_ver_file = tool_ver.replace('.','_')
+    tool_custom_path = env['tools'][tool][2]
+    path_common = env['USERTOOLDIR'] + tool_name + '/' + tool_ver_file
+    if tool_name == 'parasoft':
+        parasoft_path = tool_custom_path
+    if tool_name == 'keil':
+        build_target = BUILD_TARGET
+        prj_target = PROJECT_TARGET
+
+        path_armcc = f'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/'
+        if os.path.isdir(path_armcc):
+            print(f'Using armcc compiler version \'{COMPILER_VERSION}\' in path \'{path_armcc}\'')
+        else:
+            print(f'path: {path_armcc} does not exist, using default compiler in path \'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/\'')
+            path_armcc = f'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/'
+        # Jenkins UUID
+        if env['BUILD_MACHINE'] == 'jenkins':
+            parasoft = f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
+        else:
+            parasoft = ''
+
+
+        #Configure PATH
+        env.PrependENVPath('PATH', path_armcc)
+        env.PrependENVPath('PATH', tool_custom_path + '/UV4')
+
+        # Configure Compiler
+        env['AR'] = parasoft + path_armcc + 'armar'
+        env['AS'] = parasoft + path_armcc + 'armclang'
+        env['CC'] = parasoft + path_armcc + 'armclang'
+        env['LINK'] = parasoft + path_armcc + 'armlink'
+        env[tool_name] = tool_custom_path
+    elif env['tools'][tool][2] != '':
+        env[tool_name] = tool_custom_path
+        env.PrependENVPath('PATH', tool_custom_path)
+    else:
+        env[tool_name] = path_common
+        env.PrependENVPath('PATH', path_common)
+
+time_end = time.time()
+if failure == 0:
+    print("Configuration finished successfully in " + str(round((time_end - time_start),1)) + "s")
+    env.Append(ENV = {'PATH' : os.environ['PATH']})
+else:
+    print("Configuration failed after " + str(round((time_end - time_start),1)) + "s")
+
+#####
+# Output scons log
+#####
+f_log=open("buildlog.txt", "w")
+
+# need an Environment and a matching buffered_spawn API .. encapsulate
+class idBuffering:
+    def buffered_spawn(self, sh, escape, cmd, args, env):
+        stderr = StringIO()
+        stdout = StringIO()
+        command_string = ""
+        for i in args:
+            if len(command_string):
+                command_string += " "
+            command_string += i
+        try:
+            retval = self.env["PSPAWN"](sh, escape, cmd, args, env, stdout, stderr)
+        except OSError as x:
+            if x.errno != 10:
+                raise x
+            print("OSError ignored on command: %s" % command_string)
+            retval = 0
+        std_out = stdout.getvalue()
+        std_err = stderr.getvalue()
+        f_log.write(command_string + '\n')
+        f_log.write(std_out)
+        f_log.write(std_err)
+        f_log.flush()
+        os.fsync(f_log)
+        sys.stdout.write(std_out)
+        sys.stderr.write(std_err)
+        return retval
+
+
+# get a clean error output when running multiple jobs
+def SetupBufferedOutput(env):
+    buf = idBuffering()
+    buf.env = env
+    env["SPAWN"] = buf.buffered_spawn
+
+# Setup Tools
+SetupBufferedOutput(env)
+
+#####
+# Project Version
+#####
+def project_version_action(target, source, env):
+    if (APP_MAJOR == 0 and
+        APP_MINOR == 0 and
+        APP_DEVEL == 0 and
+        APP_BUILD == 0):
+        version.versions(VERSiON_FILE, VERSiON_FILE, 1)
+    else:
+        version.versions(VERSiON_FILE, VERSiON_FILE, 3,
+        APP_MAJOR, APP_MINOR, APP_DEVEL, APP_BUILD)
+    return 0
+
+#####
+# Find Source Files
+#####
+source_dirs = ( Glob('srv\\signal_pool\\*.c') )
+
+
+
+#####
+# Specify Include Dirs
+#####
+env['CPPPATH'] = [
+    'app\\cfg',
+    'ext\\base_prj\\1_source\\util',
+    'srv\\signal_pool',
+]
+
+#####
+# Compiler Defines
+#####
+env.Append(CPPDEFINES = [
+    'STM32G474xx'
+])
+
+#####
+#####
+# Set Parallel Jobs
+#####
+SetOption('num_jobs', multiprocessing.cpu_count())
+
+
+#####
+# Build Stage
+#####
+if (BUILD_TARGET == 'full' or
+    BUILD_TARGET == 'build' or
+    BUILD_TARGET == 'release'):
+
+    print("\n Source Files:")
+    for file in source_dirs:
+        print(file)
+
+
+    print("\n Include Directories:")
+    for path in env['CPPPATH']:
+        print(path)
+    # Delete Parasoft Files
+    Execute(Delete("cpptest.bdf"))
+    Execute(Delete(".cpptest"))
+
+    # build elf file
+    # prg_elf = env.Program(
+        # target = [env['PRJ_TARGET'] + '.axf', env['PRJ_TARGET'] + '.map', env['PRJ_TARGET'] + '.htm'],
+        # source = source_dirs
+    # )
+    prg_elf = env.Object(source = source_dirs)
+
+#####
+# Parasoft
+#####
+if (BUILD_TARGET == 'lint' or
+    BUILD_TARGET == 'full' or
+    BUILD_TARGET == 'release'):
+
+    if env['BUILD_MACHINE'] == 'jenkins':
+        lint_config = env.Command('project.properties', f"{PROJECT_CONFIG}/parasoft/project.properties", Copy("$TARGET", "$SOURCE"))
+        lint_out = env.Command(['report.pdf', 'report.xml'], ['cpptest.bdf'], f"{parasoft_path}/cpptestcli.exe -report {PROJECT_BUILD} -module . -input {PROJECT_INCLUDE}/cpptest.bdf -exclude {PROJECT_CONFIG}/parasoft/parasoftExcludes.lst -settings {PROJECT_BUILD}/project.properties -workspace {PROJECT_BUILD}")
+        Requires(lint_out, lint_config)
+        AlwaysBuild(lint_out)
+
+        # Build deliveries only on tag
+        final_lint  = env.Command(PROJECT_NUMBER + '_staticcodeanalysis.pdf', PROJECT_BUILD +'\\..\\lint\\report.pdf', Copy("$TARGET", "$SOURCE"))
+        Requires(final_lint, lint_out)
+        env.Install(PROJECT_DELIVERY, final_lint)
+        env.Alias('install', PROJECT_DELIVERY)
+
+        # Execute Install
+        env.Default('install')
+
+#####
+# Doxygen
+#####
+if (env['BUILD_TARGET'] == 'doc' or
+    env['BUILD_TARGET'] == 'full' or
+    env['BUILD_TARGET'] == 'release'):
+    Exit(0)
+
+#####
+# VectorCAST
+#####
+if (env['BUILD_TARGET'] == 'vcast' or
+    env['BUILD_TARGET'] == 'full' or
+    env['BUILD_TARGET'] == 'release'):
+    Exit(0)
+
+
+
+#####
+# Copy Artifacts
+#####
+if (env['BUILD_TARGET'] == 'copy' or
+    env['BUILD_TARGET'] == 'release'):
+
+    # Build deliveries only on tag
+    final_lint  = env.Command(PROJECT_NUMBER + '_staticcodeanalysis.pdf', PROJECT_BUILD +'\\..\\lint\\report.pdf', Copy("$TARGET", "$SOURCE"))
+
+    env.Install(PROJECT_DELIVERY, final_lint)
+    env.Alias('install', PROJECT_DELIVERY)
+
+    # Execute Install
+    env.Default('install')
