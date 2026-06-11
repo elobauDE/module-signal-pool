@@ -10,9 +10,15 @@ Thumbs.db
 # SCons
 .sconsign.dblite
 
+#ignore compiled python files
+*.pyc
+
 # Backup files
 *~
 *.bak
+
+# Log files
+*.log
 
 #ignore vcast build data
 vcastDataServer.log
@@ -26,3 +32,4 @@ vcastDataServer.log
 3_test/dynamic/module-signal-pool/vc_project/module-signal-pool_project/logs/
 *.QIK
 3_test/dynamic/module-signal-pool.db
+
