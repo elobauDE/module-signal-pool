@@ -164,7 +164,7 @@ for tool in range(len(env['tools'])):
             parasoft = f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
         else:
             parasoft = ''
-        if (BUILD_TARGET == 'vcast' or
+        if (BUILD_TARGET == 'build' or
             BUILD_TARGET == 'full' or
             BUILD_TARGET == 'release'):
             print('Builder full or vcast or release')
@@ -291,8 +291,8 @@ SetOption('num_jobs', multiprocessing.cpu_count())
 #####
 if (BUILD_TARGET == 'full' or
     BUILD_TARGET == 'build' or
-    BUILD_TARGET == 'vcast' or # used to create the VCast database for the module tests
-    BUILD_TARGET == 'lint' or # used to create the parasoft database for the static tests
+    #BUILD_TARGET == 'vcast' or # used to create the VCast database for the module tests
+    #BUILD_TARGET == 'lint' or # used to create the parasoft database for the static tests
     BUILD_TARGET == 'release'):
 
     print("\n Source Files:")
