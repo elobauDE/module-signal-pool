@@ -291,6 +291,7 @@ SetOption('num_jobs', multiprocessing.cpu_count())
 if (BUILD_TARGET == 'full' or
     BUILD_TARGET == 'build' or
     BUILD_TARGET == 'vcast' or # used to create the VCast database for the module tests
+    BUILD_TARGET == 'lint' or # used to create the parasoft database for the static tests
     BUILD_TARGET == 'release'):
 
     print("\n Source Files:")
