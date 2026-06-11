@@ -323,7 +323,7 @@ if (BUILD_TARGET == 'full' or
         # source = source_dirs
     # )
     prg_elf = env.Object(source = source_dirs)
-    AlwaysBuild(prg_elf)
+    Default(prg_elf)
 
 #####
 # Parasoft
