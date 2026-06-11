@@ -159,23 +159,19 @@ for tool in range(len(env['tools'])):
             print(f'path: {path_armcc} does not exist, using default compiler in path \'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/\'')
             path_armcc = f'{tool_custom_path}/ARM/ARMCLANG_{COMPILER_VERSION}/bin/'
         # Jenkins UUID
+        parasoft = ''
         if (env['BUILD_MACHINE'] == 'jenkins'):
             print('Prepare linting with Parasoft C/C++Test')
-            parasoft = f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
-        else:
-            parasoft = ''
-        if (BUILD_TARGET == 'build' or
-            BUILD_TARGET == 'full' or
-            BUILD_TARGET == 'release'):
-            print('Builder full or vcast or release')
-            parasoft = parasoft + f'{vcast_path}/vcshell --db={VCAST_FOLDER}/{PROJECT_TARGET}.db -- '
-        else:
-            print('build')
-            #parasoft = ''
+            parasoft += f'{parasoft_path}/bin/cpptestscan --cpptestscanOutputFile=cpptest.bdf --cpptestscanProjectName={PROJECT_TARGET} '
+        if (BUILD_TARGET == 'vcast'):
+            print('Builder vcast')
+            parasoft = f'{vcast_path}/vcshell --db={VCAST_FOLDER}/{PROJECT_TARGET}.db -- '
+
 
         #Configure PATH
         env.PrependENVPath('PATH', path_armcc)
         env.PrependENVPath('PATH', tool_custom_path + '/UV4')
+
 
         # Configure Compiler
         env['AR'] = parasoft + path_armcc + 'armar'
@@ -291,7 +287,7 @@ SetOption('num_jobs', multiprocessing.cpu_count())
 #####
 if (BUILD_TARGET == 'full' or
     BUILD_TARGET == 'build' or
-    #BUILD_TARGET == 'vcast' or # used to create the VCast database for the module tests
+    BUILD_TARGET == 'vcast' or # used to create the VCast database for the module tests
     #BUILD_TARGET == 'lint' or # used to create the parasoft database for the static tests
     BUILD_TARGET == 'release'):
 
@@ -311,8 +307,9 @@ if (BUILD_TARGET == 'full' or
     #if os.path.exists(".cpptest"):
     #    os.remove(".cpptest")
 
-    #if os.path.exists(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db'):
-    #    os.remove(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db')
+    if (BUILD_TARGET == 'vcast'):
+        if os.path.exists(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db'):
+            os.remove(f'{VCAST_FOLDER}/{PROJECT_TARGET}.db')
 
     #Delete("cpptest.bdf")
     #Delete(".cpptest")
@@ -324,7 +321,6 @@ if (BUILD_TARGET == 'full' or
         # source = source_dirs
     # )
     prg_elf = env.Object(source = source_dirs)
-    Default(prg_elf)
 
 #####
 # Parasoft
@@ -413,6 +409,8 @@ if (BUILD_TARGET == 'vcast' or
                        Copy("$TARGET", "$SOURCE"),
                    ])
     AlwaysBuild(vcast)
+    Requires(vcast, prg_elf)
+    Default(vcast)
 
 #####
 # Doxygen
