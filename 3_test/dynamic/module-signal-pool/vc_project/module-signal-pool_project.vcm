@@ -7,7 +7,7 @@
       <key>TEST_CASE_TIMEOUT</key>
       <value>10</value>
       <key>VCDB_FILENAME</key>
-      <value>V:\3_test\dynamic\module-signal-pool.db</value>
+      <value>$(SRC_DIR1)\3_test\dynamic\module-signal-pool.db</value>
       <key>VCDB_CMD_VERB</key>
       <value>ArmClang</value>
       <key>VCAST_CUSTOM_REPORT_FORMAT</key>
