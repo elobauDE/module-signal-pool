@@ -2,16 +2,16 @@
 #-- Copyright 2020 Vector Informatik, GmbH. --
 #---------------------------------------------
 
-''' 
-This is a simple shell script that can be used to provide a choices menu 
+'''
+This is a simple shell script that can be used to provide a choices menu
 of what automation command to run
- 
+
     - build a demo VC Project using the command: $VECTORCAST_DIR/vpython vcdb2vcm.py
     - copy this python script into the directory where you ran vcdb2vcm.py
     - run this script using the command: $VECTORCAST_DIR/vpython startAutomation.py
 
-Respond to the menu of command choices    
- 
+Respond to the menu of command choices
+
 '''
 
 
@@ -32,7 +32,7 @@ import vcdb2vcm
 # It is assumed that this directory contains vcshell.db file
 originalWorkingDirectory=os.getcwd()
 
-globalMakeCommand = '--vcaliases="ArmClang=gcc" scons -C V:\\1_source\\'
+globalMakeCommand = '--vcaliases="ArmClang=gcc" scons -C V:\\1_source\\ BUILD_TARGET=build BUILD_MACHINE=local'
 vceBaseDirectory = ''
 coverBaseDirs = None
 
@@ -83,14 +83,14 @@ def merge_basedir_args(args):
 def setupArgs (toolName):
     '''
     '''
-    
+
     parser = argparse.ArgumentParser(description=toolName)
-    
+
     group = parser.add_mutually_exclusive_group(required=True)
-    
+
     # Base directory for building and vc projects and scripts.
     group.add_argument ('--interactive', dest='interactive', action='store_true', default=False,
-                           help='Interactive mode')    
+                           help='Interactive mode')
 
     # Command to run -- for non Interactive mode
     commandChoices=['make', 'clean', 'build-db', 'build-vce', 'vcast', 'enable', 'disable', 'enterprise']
@@ -108,17 +108,17 @@ def setupArgs (toolName):
     # Path to the VC project file: .vcm, .vce, .vcp (used for command='toolbar')
     parser.add_argument ('--project', dest='project', action='store', default='',
                            help='Full path to the VectorCAST project file')
-                           
+
     # Path to the environment script file (used for command='enterprise')
     parser.add_argument ('--script', dest='script', action='store', default='',
-                           help='Root path to the VectorCAST workarea')                              
-                           
+                           help='Root path to the VectorCAST workarea')
+
     # Root for vcast-workarea directory (used for command='toolbar' || 'enterprise')
     parser.add_argument ('--workarea', dest='workarea', action='store', default='',
-                           help='Root path to the VectorCAST workarea')    
-                           
+                           help='Root path to the VectorCAST workarea')
+
     parser.add_argument ('--verbose', dest='verbose', action='store_true', default=False,
-                           help='Root path to VectorCAST environments')    
+                           help='Root path to VectorCAST environments')
 
     parser.add_argument ('--abort-on-error', dest='abort_on_error', action='store_true',
                            help='Abort the command when an error occurs')
@@ -149,7 +149,7 @@ def solicitChoice():
     print('   (6) Disable Coverage')
     print('   (7) Enable Coverage')
     print('   (8) Quit')
-    
+
     try:
         listChoiceString = ( input ('Action to take: '))
         listChoice = int (listChoiceString)
@@ -159,28 +159,28 @@ def solicitChoice():
 
     return listChoice
 
-    
+
 def clean ():
     '''
     This function will un-instrument all of the files that are in the cover project
     and then remove the vcast-workarea directory.  We do this rather than using
     the clicast un-instrument, because this is _MUCH_ faster
     '''
-    workArea = vcdb2vcm.VCAST_WORKAREA 
-    
+    workArea = vcdb2vcm.VCAST_WORKAREA
+
     # Un-instument any instrumented source files
     # For GPGPU projects, this will also restore any aggregator units
     # which (since AutomationController does all preparation in
     # --prep_dir=vcast-workarea/vc_prep) are the only files that
     # wouldn't otherwise be cleaned up when we blast the work area.
-    AutomationController.unInstrumentSourceFiles() 
+    AutomationController.unInstrumentSourceFiles()
 
     # Remove work area, which also cleans up any remaining GPGPU prepared files
     if os.path.isdir (workArea):
         print('Removing the previous vcast-workarea')
         shutil.rmtree (workArea)
 
-    
+
 def performTask (whatToDo, verbose):
     '''
     This function will do the real work
@@ -212,20 +212,20 @@ def performTask (whatToDo, verbose):
                               verbose=verbose)
         except Exception as e:
             print(e)
-  
+
     elif whatToDo == 'vcast':
         # Start VC for the project
-        AutomationController.startManageGUI()      
-    
+        AutomationController.startManageGUI()
+
     elif whatToDo == 'disable':
         AutomationController.disableCoverage()
 
     elif whatToDo == 'enable':
-        AutomationController.enableCoverage()  
+        AutomationController.enableCoverage()
 
 
 
-    
+
 def interactiveMode(verbose):
     '''
     This function will run in an infinite loop to solicit input from the
@@ -234,10 +234,10 @@ def interactiveMode(verbose):
     global globalMakeCommand
     global vceBaseDirectory
     while (True):
-    
+
         whatToDo = solicitChoice()
         command='none'
-        
+
         if whatToDo == 1:
             # Solicit the build command
             makeCommand =  input ('Enter the command to build your application: ')
@@ -253,7 +253,7 @@ def interactiveMode(verbose):
             except:
                 command = 'none'
                 pass
-           
+
         elif whatToDo == 3:
             command = 'build-db'
 
@@ -264,18 +264,18 @@ def interactiveMode(verbose):
 
         elif whatToDo == 5:
             command = 'vcast'
-        
+
         elif whatToDo == 6:
             command = 'disable'
-        
+
         elif whatToDo == 7:
             command = 'enable'
-        
+
         elif whatToDo == 8:
             break
-        
+
         performTask (command, verbose)
-    
+
 
 def argsAreValid (args):
 
@@ -285,15 +285,15 @@ def argsAreValid (args):
     else:
         return True
 
-    
+
 def main():
     '''
     '''
     global coverBaseDirs
     global globalMakeCommand
     global vceBaseDirectory
-    
-    parser = setupArgs ('startAutomation') 
+
+    parser = setupArgs ('startAutomation')
     # Read the arguments
     try:
         args = parser.parse_args()
@@ -319,7 +319,7 @@ def main():
         vceBaseDirectory = args.vceroot
         coverBaseDirs = merge_basedir_args(args)
         performTask (args.command, args.verbose)
-    
+
 
 if __name__ == "__main__":
     # The default Windows encoding on Python 3.7 is cp1252, which is undesired.
