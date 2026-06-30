@@ -203,8 +203,8 @@ sp_result_t set_signal_type(const sig_nr_pools_t sig_pool, const sig_config_t ra
         const uint32_t end_range, const sp_signal_type_t type)
 {
     sp_result_t ret_val = check_accessor_par(sig_pool, range, begin_range);
-    ret_val |= check_accessor_par(sig_pool, range, end_range);
-
+    ret_val |= check_accessor_par(sig_pool, range, end_range - 1u); /* end range is index of next signal pool element
+                                                                       and fails at last element without -1 */
     if (ret_val == ERR_SP_SUCCESS)
     {
         for (uint32_t i = begin_range; i < end_range; i++)
