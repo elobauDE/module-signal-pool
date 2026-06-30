@@ -1,0 +1,57 @@
+{
+    "gitmoji.onlyUseCustomEmoji": true,
+    "gitmoji.outputType": "emoji",    // for emoji in commit message
+    // "gitmoji.outputType": "code",     // for code in commit message
+    "gitmoji.addCustomEmoji": [
+    {
+        "emoji": "➕ [add]",
+        "code": "[add]",
+        "description": "add new feature"
+    },
+    {
+        "emoji": "🗑️ [remove]",
+        "code": "[remove]",
+        "description": "remove"
+    },
+    {
+        "emoji": "🐛 [fix]",
+        "code": "[fix]",
+        "description": "fix"
+    },
+    {
+        "emoji": "✏️ [change]",
+        "code": "[change]",
+        "description": "requirement change"
+    },
+    {
+        "emoji": "✨ [improvement]",
+        "code": "[improvement]",
+        "description": "improvements of the code / code quality"
+    },
+    {
+        "emoji": "♻️ [refactor]",
+        "code": "[refactor]",
+        "description": "changes that do not affect the meaning of the code (formatting)"
+    },
+    {
+        "emoji": "📃 [docs]",
+        "code": "[docs]",
+        "description": "Enterprise Architect changes, doxygen"
+    },
+    {
+        "emoji": "🔧 [config]",
+        "code": "[config]",
+        "description": "jenkins, scons, parasoft- config-file"
+    },
+    {
+        "emoji": "🩺 [testing]",
+        "code": "[testing]",
+        "description": "VectorCAST, Canalyzer"
+    },
+    {
+        "emoji": "📦️ [submodule]",
+        "code": "[submodule]",
+        "description": "add / change a submodule"
+    }
+    ]
+}
