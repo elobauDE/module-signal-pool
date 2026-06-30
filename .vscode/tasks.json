@@ -1,0 +1,60 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "scons build",
+            "type": "shell",
+            "command": "scons BUILD_TARGET=build BUILD_MACHINE=local",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd" : "${workspaceFolder}/1_source"
+            }
+        },
+        {
+            "label": "scons moduletests",
+            "type": "shell",
+            "command": "scons BUILD_TARGET=vcast BUILD_MACHINE=local",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd" : "${workspaceFolder}/1_source"
+            }
+        },
+        {
+            "label": "scons doc",
+            "type": "shell",
+            "command": "scons BUILD_TARGET=doc BUILD_MACHINE=local",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd" : "${workspaceFolder}/1_source"
+            }
+        },
+        {
+            "label": "scons tool_doc",
+            "type": "shell",
+            "command": "scons BUILD_TARGET=tool_doc BUILD_MACHINE=local",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd" : "${workspaceFolder}/1_source"
+            }
+        }
+
+    ]
+}
